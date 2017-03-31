@@ -38,19 +38,16 @@ def spectral_registration(data, target, initial_guess=(0.0, 0.0), frequency_rang
     # case we use the spectral points between those two frequencies, or it can
     # be a numpy.array of the same size as the data in which case we simply use
     # that array as the weightings for the comparison
+
+    # Specify some default spectral weights (i.e. equal weighting to all region of the spectrum)
+    spectral_weights = numpy.ones(data.shape)
     if type(frequency_range) is tuple:
         spectral_weights = numpy.logical_and(data.frequency_axis() > frequency_range[0],data.frequency_axis() < frequency_range[1])
     elif frequency_range is not None:
         # If frequency_range is a numpy array...
         spectral_weights = frequency_range
-    elif frequency_range is None:
-        # Spectral weights  = 1 for all locations
-        spectral_weights = numpy.ones(data.shape)
-    else:
-        # TODO
-        x=1 # Some kind of error message
     
-    # Apply the spectral weights to the spectrum
+    # Apply the spectral weights to the data
     d = data.spectrum()*spectral_weights
     t = target.spectrum()*spectral_weights
     
@@ -60,7 +57,7 @@ def spectral_registration(data, target, initial_guess=(0.0, 0.0), frequency_rang
     
     # Check on time_axis constraints
     if type(time_range) is tuple:
-        # Run the algorithm on a subset of the samples only, defined by the input range
+        # Run the algorithm on a subset of the time domain samples only, defined by the input range
         time_idx = numpy.logical_and(data.time_axis()>=time_range[0],data.time_axis()<=time_range[1])
         data = data[time_idx]
         target = target[time_idx]
