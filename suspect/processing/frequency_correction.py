@@ -17,16 +17,39 @@ def spectral_registration(data, target, initial_guess=(0.0, 0.0), frequency_rang
     """
     Performs the spectral registration method to calculate the frequency and
     phase shifts between the input data and the reference spectrum target. The
-    frequency range over which the two spectra are compared can be specified to
-    exclude regions where the spectra differ.
+    frequency range and time range over which the two spectra are compared can 
+    be specified to exclude regions where the spectra differ, or the signal 
+    quality is low. 
+    
+    Algorithm described in : Near, Jamie, et al. "Frequency and phase drift 
+    correction of magnetic resonance spectroscopy data by spectral registration 
+    in the time domain." Magnetic resonance in medicine 73.1 (2015): 44-50.
+    
     Parameters
     ----------
     data : MRSData
+        Input signal to align
+        
     target : MRSData
+        Input signal data will be aligned to
+        
     initial_guess : tuple
-    frequency_range : 
+        Initial guess for the optimal (frequency,phase) shifts, used as a starting
+        point for the scipy.optimize.leastsq function
+        
+    frequency_range : tuple
+        (lower bounds, upper bound) of the frequency range to consider for 
+        alignment. Specified in Hz.
+    
+    time_range : tuple
+        (lower bound, upper bound) of the time range to use for alignment. 
+    
     Returns
     -------
+    freq_and_phase_params : tuple
+        Optimal (frequency shift, phase shift) parameters output by the 
+        least squares algorithm
+    
     """
 
     # make sure that there are no extra dimensions in the data
@@ -56,6 +79,9 @@ def spectral_registration(data, target, initial_guess=(0.0, 0.0), frequency_rang
     target = t.fid()
     
     # Check on time_axis constraints
+    # the supplied time range can be None, in which case the whole signal will 
+    # used, or it can be a tuple specifying the lower and upper bounds of the 
+    # time range to use. 
     if type(time_range) is tuple:
         # Run the algorithm on a subset of the time domain samples only, defined by the input range
         time_idx = numpy.logical_and(data.time_axis()>=time_range[0],data.time_axis()<=time_range[1])
@@ -73,26 +99,29 @@ def spectral_registration(data, target, initial_guess=(0.0, 0.0), frequency_rang
         return return_vector
 
     out = scipy.optimize.leastsq(residual, initial_guess)
-    return out[0][0], out[0][1]
+    freq_and_phase_params = (out[0][0], out[0][1])
+    
+    return freq_and_phase_params
     
 def select_target_for_spectal_registration(data, frequency_range = None):
     """
-    Identifies a candidate target signal from the ensemble that can be used for 
-    spectral registration. The candidate is the signal whose maximum abs in the
+    Identifies a candidate target signal from an ensemble that can be used for 
+    spectral registration. The candidate is the signal whose maximum magnitude in the
     frequency domain is closest to the median maximum abs values of all the 
     signals in the ensemble.
     
     Parameters
     ----------
     data : MRSData
-    
-    frequency_range: tuple 
+        Ensemble of candidate signals from which the target is selected. 
+        
+    frequency_range : tuple 
         Specifies the upper and lower bounds in the frequency domain to use for
-        selecting the target
+        selecting the target. Range is specified in Hz.
     
     Returns
     -------
-    target_idx: integer 
+    target_idx : integer 
         Index of the selected target signal
     
     """
