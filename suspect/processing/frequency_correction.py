@@ -106,7 +106,7 @@ def spectral_registration(data, target, initial_guess=(0.0, 0.0), frequency_rang
     
     return frequency_shift, phase_shift
     
-def select_target_for_spectal_registration(data, frequency_range = None):
+def select_target_for_spectral_reg_median_mag(spectral_data, frequency_range = None):
     """
     Identifies a candidate target signal from an ensemble that can be used for 
     spectral registration. The candidate is the signal whose maximum magnitude in the
@@ -115,8 +115,9 @@ def select_target_for_spectal_registration(data, frequency_range = None):
     
     Parameters
     ----------
-    data : MRSData
-        Ensemble of candidate signals from which the target is selected. 
+    spectral_data : MRSSpectrum
+        Ensemble of candidate signals from which the target is selected, in 
+        frequency domain
         
     frequency_range : tuple 
         Specifies the upper and lower bounds in the frequency domain to use for
@@ -128,12 +129,13 @@ def select_target_for_spectal_registration(data, frequency_range = None):
         Index of the selected target signal
     
     """
+    spectral_weights = numpy.ones(spectral_data.shape)
     if type(frequency_range) is tuple:
-        spectral_weights = numpy.logical_and(data.frequency_axis(),frequency_range[0],data.frequency_axis() < frequency_range[1])
-    else:
+        spectral_weights = numpy.logical_and(spectral_data.frequency_axis(),frequency_range[0],spectral_data.frequency_axis() < frequency_range[1])
+    elif frequency_range is not None:
         spectral_weights = frequency_range
     
-    filtered_spectrum = spectral_weights*data.spectrum()
+    filtered_spectrum = spectral_weights*spectral_data
     max_vals = numpy.max(numpy.abs(filtered_spectrum),axis=1)
     target_idx = numpy.argmin(numpy.abs(numpy.median(max_vals)-max_vals))
 
