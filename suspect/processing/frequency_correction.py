@@ -46,9 +46,11 @@ def spectral_registration(data, target, initial_guess=(0.0, 0.0), frequency_rang
     
     Returns
     -------
-    freq_and_phase_params : tuple
-        Optimal (frequency shift, phase shift) parameters output by the 
-        least squares algorithm
+    frequency_shift : float
+        Optimal frequency shift output by the least squares algorithm, in Hz.
+    
+    phase_shift : float
+        Optimal phase shift output by the least squares algorithm, in radians.
     
     """
 
@@ -99,9 +101,10 @@ def spectral_registration(data, target, initial_guess=(0.0, 0.0), frequency_rang
         return return_vector
 
     out = scipy.optimize.leastsq(residual, initial_guess)
-    freq_and_phase_params = (out[0][0], out[0][1])
+    frequency_shift = out[0][0]
+    phase_shift = out[0][1]
     
-    return freq_and_phase_params
+    return frequency_shift, phase_shift
     
 def select_target_for_spectal_registration(data, frequency_range = None):
     """
